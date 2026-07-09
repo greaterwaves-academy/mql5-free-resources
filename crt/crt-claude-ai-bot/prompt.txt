@@ -1,0 +1,70 @@
+Crea un Asesor Experto (EA) completo y autosuficiente en MQL5 que opere el patrón Candle Range Theory (CRT).
+
+## QUÉ ES CRT ##
+CRT es un patrón de falsa ruptura de 3 velas:
+- `vela[2]` = Acumulación → define el rango: CRH (máximo) y CRL (mínimo)
+- `vela[1]` = Manipulación → rompe el rango y cierra de vuelta dentro
+- `vela[0]` = Distribución → vela actual; la entrada se ejecuta en su apertura
+
+**CRT BAJISTA** (vela de acumulación es alcista: close > open)
+- La vela de manipulación rompe POR ENCIMA de CRH (`high[1] > high[2]`)
+- La vela de manipulación cierra DENTRO del rango (`CRL <= close[1] <= CRH`)
+- Entrada: VENTA en la apertura de `vela[0]`
+
+**CRT ALCISTA** (vela de acumulación es bajista: close < open)
+- La vela de manipulación rompe POR DEBAJO de CRL (`low[1] < low[2]`)
+- La vela de manipulación cierra DENTRO del rango (`CRL <= close[1] <= CRH`)
+- Entrada: COMPRA en la apertura de `vela[0]`
+
+## VALIDACIÓN DE LA VELA DE ACUMULACIÓN ##
+Antes de considerar válido un patrón CRT, la vela de acumulación debe superar un tamaño mínimo en puntos. Si el rango `(CRH − CRL)` de la vela de acumulación es inferior al mínimo configurado para esa temporalidad, el patrón se descarta completamente.
+- Para LTF: `(CRH − CRL) >= MinPuntos_LTF * _Point`
+- Para HTF: `(CRH − CRL) >= MinPuntos_HTF * _Point`
+Este filtro se aplica dentro de la función `DetectarCRT()` antes de evaluar la manipulación.
+
+## CONFIRMACIÓN EN DOS TEMPORALIDADES ##
+El EA busca el patrón CRT en DOS temporalidades simultáneamente:
+- HTF (temporalidad alta) — parámetro configurable, por defecto D1
+- LTF (temporalidad baja) — la temporalidad del gráfico
+
+Solo se abre una operación cuando AMBAS temporalidades detectan un CRT en la MISMA dirección en sus velas más recientes completadas. Si solo una temporalidad lo detecta, no se opera.
+
+## REGLAS DE ENTRADA ##
+La entrada se ejecuta en la apertura de la nueva vela (`vela[0]`) cuando:
+1. El patrón CRT en LTF es válido (según la definición anterior, incluyendo el filtro de puntos mínimos)
+2. El patrón CRT en HTF también es válido en la misma dirección (incluyendo su propio filtro de puntos mínimos)
+3. No hay ninguna posición abierta para este símbolo
+
+Solo una posición abierta a la vez por símbolo.
+
+## REGLAS DE SALIDA ##
+El SL y el TP se establecen al abrir la operación usando los niveles de la vela de acumulación **de la LTF**:
+
+**Operación ALCISTA:**
+- TP = CRH de la vela de acumulación LTF
+- SL = CRL − (rango × Buffer_SL)
+
+**Operación BAJISTA:**
+- TP = CRL de la vela de acumulación LTF
+- SL = CRH + (rango × Buffer_SL)
+
+Donde `rango = CRH − CRL` y `Buffer_SL` es un parámetro configurable (por defecto 0.2, es decir, el SL se coloca un 20% del rango más allá de la banda opuesta).
+
+## PARÁMETROS DE ENTRADA ##
+```
+input ENUM_TIMEFRAMES HTF           = PERIOD_D1;  // Temporalidad alta
+input int             MinPuntos_LTF = 100;         // Rango mínimo de acumulación LTF (puntos)
+input int             MinPuntos_HTF = 500;         // Rango mínimo de acumulación HTF (puntos)
+input double          Buffer_SL     = 0.2;         // Buffer del SL (% del rango)
+input double          Lote          = 0.1;         // Tamaño de posición
+input ulong           Magic         = 123456;      // Número mágico
+```
+
+## REQUISITOS DE IMPLEMENTACIÓN ##
+- Usar `OnTick()` y procesar la lógica **solo en la apertura de vela** (detectar nueva vela con una variable `static datetime` comparando `iTime(_Symbol, _Period, 0)`).
+- Escribir una función reutilizable `DetectarCRT(symbol, timeframe, minPuntos)` que devuelva `+1` para CRT alcista, `-1` para CRT bajista, `0` para ningún patrón. El parámetro `minPuntos` se usa para validar el rango mínimo de la vela de acumulación.
+- La función también debe devolver por referencia los valores `CRH` y `CRL` de la acumulación LTF para usarlos en el cálculo de SL/TP.
+- Usar `CTrade` para ejecutar órdenes (incluir `<Trade\Trade.mqh>`).
+- Normalizar todos los precios con `NormalizeDouble(..., _Digits)` antes de usarlos.
+- El EA debe compilar sin errores ni advertencias.
+- Un único archivo, sin dependencias externas.
