@@ -1,0 +1,29 @@
+//+------------------------------------------------------------------+
+//|                  GREATERWAVES – Trading Systems                  |
+//|                                                                  |
+//|  Academy:   https://greaterwaves.com                             |
+//|  YouTube:   https://youtube.com/@greaterwaves                    |
+//|                                                                  |
+//|  Copyright © Greaterwaves – All rights reserved                  |
+//+------------------------------------------------------------------+
+
+INSTRUCCIONES
+
+1. Abre MetaTrader 5 y ve a:
+   "Archivo" → "Abrir carpeta de datos" → "MQL5" → "Experts".
+
+2. Copia el archivo del robot (.ex5) dentro de la carpeta "Experts".
+
+3. En la ventana de Navegador, haz clic derecho sobre "Asesores Expertos"  
+   y selecciona "Actualizar" para que aparezca el nuevo robot.
+
+4. Abre un gráfico del activo correspondiente en la temporalidad indicada.  
+   Activa el botón "Trading Algorítmico" en la barra superior.
+
+5. Arrastra el Expert Advisor al gráfico.  
+   En los parámetros, deja la configuración por defecto salvo:
+
+   - "VolumenFijo": aquí debes indicar el tamaño de lote que quieras que abra en las operaciones.
+
+6. Pulsa "Aceptar".  
+   Si todo está correcto, deberías ver un ícono con un "sombrero de experto" en la parte superior derecha del gráfico (señal de que el EA está activo).
